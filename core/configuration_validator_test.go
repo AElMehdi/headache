@@ -95,7 +95,19 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid configuration with REM comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "REM", "includes": ["**/*.go"]}`), nil)
+			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "REM", "includes": ["**/*.sql"]}`), nil)
+
+		validationError := validator.Validate("file://docs.json")
+
+		Expect(validationError).To(BeNil())
+	})
+
+	It("accepts valid compound configuration", func() {
+		fileReader.On("Open", "docs.json").
+			Return(inMemoryFile(`[
+  {"headerFile": "some-file.txt", "style": "SlashSlash", "includes": ["**/*.go"]},
+  {"headerFile": "some-file.txt", "style": "REM", "includes": ["**/*.sql"]}
+]`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 

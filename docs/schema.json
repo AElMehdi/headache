@@ -3,65 +3,80 @@
   "$id": "http://fbiville.github.io/headache/schema.json",
   "title": "Headache configuration",
   "description": "Schema for headache configuration",
-  "type": "object",
-  "properties": {
-    "headerFile": {
-      "description": "Location of the license file with the contents to insert to source files",
-      "type": "string"
-    },
-    "style": {
-      "description": "Comment style to apply",
-      "type": "string",
-      "enum": [
-        "SlashStar",
-        "SlashSlash",
-        "Hash",
-        "DashDash",
-        "SemiColon",
-        "REM"
-      ]
-    },
-    "includes": {
-      "description": "Pattern to include source files",
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "minItems": 1
-    },
-    "excludes": {
-      "description": "Pattern to exclude source files",
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "data": {
-      "description": "Template parameters referenced in `headerFile` as `{{.NameOfParameter}}`",
+  "definitions": {
+    "singleConfiguration": {
       "type": "object",
       "properties": {
-        "Year": {
-          "$comment": "Year is a reserved property and cannot be used",
-          "not": {}
+        "headerFile": {
+          "description": "Location of the license file with the contents to insert to source files",
+          "type": "string"
         },
-        "YearRange": {
-          "$comment": "YearRange is a reserved property and cannot be used",
-          "not": {}
+        "style": {
+          "description": "Comment style to apply",
+          "type": "string",
+          "enum": [
+            "SlashStar",
+            "SlashSlash",
+            "Hash",
+            "DashDash",
+            "SemiColon",
+            "REM"
+          ]
         },
-        "StartYear": {
-          "$comment": "StartYear is a reserved property and cannot be used",
-          "not": {}
+        "includes": {
+          "description": "Pattern to include source files",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
         },
-        "EndYear": {
-          "$comment": "EndYear is a reserved property and cannot be used",
-          "not": {}
+        "excludes": {
+          "description": "Pattern to exclude source files",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "data": {
+          "description": "Template parameters referenced in `headerFile` as `{{.NameOfParameter}}`",
+          "type": "object",
+          "properties": {
+            "Year": {
+              "$comment": "Year is a reserved property and cannot be used",
+              "not": {}
+            },
+            "YearRange": {
+              "$comment": "YearRange is a reserved property and cannot be used",
+              "not": {}
+            },
+            "StartYear": {
+              "$comment": "StartYear is a reserved property and cannot be used",
+              "not": {}
+            },
+            "EndYear": {
+              "$comment": "EndYear is a reserved property and cannot be used",
+              "not": {}
+            }
+          }
         }
-      }
+      },
+      "required": [
+        "headerFile",
+        "style",
+        "includes"
+      ]
     }
   },
-  "required": [
-    "headerFile",
-    "style",
-    "includes"
+  "oneOf": [
+    {
+      "$ref": "#/definitions/singleConfiguration"
+    },
+    {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/singleConfiguration"
+      }
+    }
   ]
 }

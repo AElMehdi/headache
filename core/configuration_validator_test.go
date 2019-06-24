@@ -17,11 +17,7 @@
 package core_test
 
 import (
-	"io"
-	"net/http"
-	"os"
-
-	"github.com/fbiville/headache/core"
+	. "github.com/fbiville/headache/core"
 	"github.com/fbiville/headache/fs_mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -32,13 +28,13 @@ var _ = Describe("Configuration validator", func() {
 	var (
 		t          GinkgoTInterface
 		fileReader *fs_mocks.FileReader
-		validator  core.JsonSchemaValidator
+		validator  JsonSchemaValidator
 	)
 
 	BeforeEach(func() {
 		t = GinkgoT()
 		fileReader = new(fs_mocks.FileReader)
-		validator = core.JsonSchemaValidator{
+		validator = JsonSchemaValidator{
 			FileReader: fileReader,
 			Schema:     schemaFrom(json.NewReferenceLoader("file://../docs/schema.json")),
 		}
@@ -50,7 +46,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts minimal valid configuration", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "SlashStar", "includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-file.txt", "style": "SlashStar", "includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -59,7 +55,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid configuration with SlashSlash comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "SlashSlash", "includes": ["**/*.go"], "data": {"FooBar": true}}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-file.txt", "style": "SlashSlash", "includes": ["**/*.go"], "data": {"FooBar": true}}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -68,7 +64,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid configuration with DashDash comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "DashDash", "includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-file.txt", "style": "DashDash", "includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -77,7 +73,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid configuration with SemiColon comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "SemiColon", "includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-file.txt", "style": "SemiColon", "includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -86,7 +82,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid configuration with Hash comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "Hash", "includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-file.txt", "style": "Hash", "includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -95,7 +91,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid configuration with REM comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-file.txt", "style": "REM", "includes": ["**/*.sql"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-file.txt", "style": "REM", "includes": ["**/*.sql"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -104,7 +100,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("accepts valid compound configuration", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`[
+			Return(NewInMemoryFile(`[
   {"headerFile": "some-file.txt", "style": "SlashSlash", "includes": ["**/*.go"]},
   {"headerFile": "some-file.txt", "style": "REM", "includes": ["**/*.sql"]}
 ]`), nil)
@@ -116,7 +112,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with missing header file", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"style": "SlashStar", "includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"style": "SlashStar", "includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -125,7 +121,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with missing comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -134,7 +130,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with invalid comment style", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "invalid", includes": ["**/*.go"]}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "invalid", includes": ["**/*.go"]}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -143,7 +139,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with missing includes", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashStar"}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashStar"}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -152,7 +148,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with empty includes", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": []}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": []}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -161,7 +157,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with reserved year parameter", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"Year": 2019}}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"Year": 2019}}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -170,7 +166,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with reserved year range parameter", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"YearRange": 2019}}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"YearRange": 2019}}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -179,7 +175,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with reserved start year parameter", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"StartYear": 2019}}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"StartYear": 2019}}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -188,7 +184,7 @@ var _ = Describe("Configuration validator", func() {
 
 	It("rejects configuration with reserved end year parameter", func() {
 		fileReader.On("Open", "docs.json").
-			Return(inMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"EndYear": 2019}}`), nil)
+			Return(NewInMemoryFile(`{"headerFile": "some-header.txt", "style": "SlashSlash", "includes": ["**/*.*"], "data": {"EndYear": 2019}}`), nil)
 
 		validationError := validator.Validate("file://docs.json")
 
@@ -203,33 +199,4 @@ func schemaFrom(loader json.JSONLoader) *json.Schema {
 		panic(err)
 	}
 	return schema
-}
-
-func inMemoryFile(contents string) http.File {
-	return InMemoryFile{Contents: []byte(contents)}
-}
-
-type InMemoryFile struct {
-	Contents []byte
-}
-
-func (InMemoryFile) Close() error { return nil }
-func (file InMemoryFile) Read(p []byte) (int, error) {
-	contents := file.Contents
-	end := min(len(p), len(contents))
-	copiedBytes := copy(p, contents[0:end])
-	if len(p) > len(contents) {
-		return copiedBytes, io.EOF
-	}
-	return copiedBytes, nil
-}
-func (InMemoryFile) Seek(offset int64, whence int) (int64, error) { panic("not implemented") }
-func (InMemoryFile) Readdir(count int) ([]os.FileInfo, error)     { panic("not implemented") }
-func (InMemoryFile) Stat() (os.FileInfo, error)                   { panic("not implemented") }
-
-func min(a, b int) int {
-	if a <= b {
-		return a
-	}
-	return b
 }

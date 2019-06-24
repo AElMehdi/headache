@@ -12,7 +12,11 @@ type ConfigurationLoader struct {
 }
 
 func (cl *ConfigurationLoader) ReadConfiguration(configFile *string) (*Configuration, error) {
-	err := cl.validateConfiguration(configFile)
+	return cl.readConfiguration(configFile, "https://fbiville.github.io/headache/schema.json")
+}
+
+func (cl *ConfigurationLoader) readConfiguration(configFile *string, schemaUri string) (*Configuration, error) {
+	err := cl.validateConfiguration(configFile, schemaUri)
 	if err != nil {
 		return nil, err
 	}
@@ -38,8 +42,8 @@ func (cl *ConfigurationLoader) UnmarshallConfiguration(configurationPayload []by
 	return &result, nil
 }
 
-func (cl *ConfigurationLoader) validateConfiguration(configFile *string) error {
-	schema := loadSchema()
+func (cl *ConfigurationLoader) validateConfiguration(configFile *string, schemaUri string) error {
+	schema := loadSchema(schemaUri)
 	if schema == nil {
 		return nil
 	}
@@ -50,8 +54,8 @@ func (cl *ConfigurationLoader) validateConfiguration(configFile *string) error {
 	return jsonSchemaValidator.Validate("file://" + *configFile)
 }
 
-func loadSchema() *jsonsch.Schema {
-	schema, err := jsonsch.NewSchema(jsonsch.NewReferenceLoader("https://fbiville.github.io/headache/schema.json"))
+func loadSchema(schemaUri string) *jsonsch.Schema {
+	schema, err := jsonsch.NewSchema(jsonsch.NewReferenceLoader(schemaUri))
 	if err != nil {
 		log.Printf("headache configuration warning: cannot load schema, skipping configuration validation. See reason below:\n\t%v\n", err)
 		return nil
